@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c0603">
+<title>Ye Wynter Solstice Revel — Feed the Fyre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c0603; --soot:#160b05; --brick:#3a1c10; --brick2:#2c140a;
+    --bone:#e8d9b8; --ember:#ff8c3a; --flame:#ffb347; --eerie:#9fffba;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'IM Fell English',Georgia,serif;color:var(--bone);
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 100%, rgba(255,120,30,.14), transparent 60%),
+      linear-gradient(180deg,#050203 0%,var(--ink) 40%,var(--soot) 100%);
+    min-height:100vh;overflow-x:hidden;
+  }
+
+  /* flickering candlelight on the walls — opacity only, GPU cheap */
+  .wallflicker{
+    position:fixed;inset:0;pointer-events:none;z-index:1;
+    background:radial-gradient(ellipse 80% 50% at 50% 80%, rgba(255,130,40,.16), transparent 65%);
+    animation:guttering 4.2s ease-in-out infinite;
+  }
+  @keyframes guttering{
+    0%,100%{opacity:.55;} 18%{opacity:.95;} 31%{opacity:.6;}
+    47%{opacity:1;} 63%{opacity:.7;} 82%{opacity:.9;}
+  }
+
+  /* drifting floor-mist */
+  .mist{
+    position:fixed;bottom:0;left:-20%;width:140%;height:120px;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse 40% 100% at 30% 100%, rgba(190,210,200,.10), transparent 70%),
+               radial-gradient(ellipse 35% 100% at 70% 100%, rgba(190,210,200,.08), transparent 70%);
+    animation:drift 16s ease-in-out infinite alternate;
+  }
+  @keyframes drift{from{transform:translateX(-6%);}to{transform:translateX(6%);}}
+
+  /* sound banner */
+  .soundcall{
+    position:fixed;top:0;left:0;right:0;z-index:90;text-align:center;
+    padding:10px 14px;font-style:italic;font-size:.95rem;color:var(--eerie);
+    background:rgba(5,2,3,.85);border-bottom:1px solid rgba(159,255,186,.25);
+    animation:guttering 3s ease-in-out infinite;transition:opacity .8s,transform .8s;
+  }
+  .soundcall.gone{opacity:0;transform:translateY(-100%);pointer-events:none;}
+  .soundbtn{
+    position:fixed;top:10px;right:10px;z-index:95;
+    background:rgba(0,0,0,.55);border:1px solid rgba(232,217,184,.35);color:var(--bone);
+    border-radius:999px;padding:8px 14px;font-family:inherit;font-size:.85rem;cursor:pointer;
+    opacity:0;transition:opacity .8s;
+  }
+  .soundbtn.show{opacity:1;}
+
+  header{text-align:center;padding:64px 16px 4px;position:relative;z-index:5;}
+  .eyebrow{
+    letter-spacing:.34em;text-transform:uppercase;font-size:.68rem;color:var(--eerie);
+    opacity:.85;
+  }
+  h1{
+    font-family:'UnifrakturMaguntia',serif;font-weight:400;
+    font-size:clamp(2.4rem,11vw,5rem);line-height:1.02;margin:.25em 0 .12em;color:#f4e6c4;
+    text-shadow:0 0 26px rgba(255,140,50,.45),0 2px 4px #000;
+    animation:titlebreathe 5s ease-in-out infinite alternate;
+  }
+  @keyframes titlebreathe{
+    from{text-shadow:0 0 18px rgba(255,140,50,.35),0 2px 4px #000;}
+    to{text-shadow:0 0 38px rgba(255,140,50,.7),0 2px 4px #000;}
+  }
+  .sub{font-style:italic;font-size:1.05rem;max-width:36ch;margin:0 auto;color:#cdb990;}
+  .details{margin-top:12px;font-size:.92rem;color:var(--ember);}
+  .details span{margin:0 .5em;opacity:.5;}
+
+  .howto{
+    margin:22px auto 0;max-width:520px;position:relative;z-index:5;
+    background:linear-gradient(#171009,#100a05);
+    border:1px solid rgba(232,217,184,.28);border-radius:4px;
+    padding:16px 20px 14px;
+    box-shadow:0 0 0 4px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.6);
+  }
+  .howto::before,.howto::after{
+    content:'✦';position:absolute;top:6px;color:var(--ember);font-size:.8rem;opacity:.8;
+  }
+  .howto::before{left:10px;}.howto::after{right:10px;}
+  .howto h2{
+    font-family:'UnifrakturMaguntia',serif;font-weight:400;font-size:1.45rem;
+    margin-bottom:6px;color:#f4e6c4;text-align:center;
+  }
+  .howto ol{margin-left:1.3em;font-size:1rem;line-height:1.6;}
+  .howto b{color:var(--flame);}
+
+  /* =========== 3D SCENE =========== */
+  .stage{
+    position:relative;z-index:4;margin:26px auto 0;max-width:560px;padding:0 10px;
+    perspective:900px;
+  }
+  .room3d{
+    transform-style:preserve-3d;
+    animation:roomsway 9s ease-in-out infinite alternate;
+  }
+  @keyframes roomsway{
+    from{transform:rotateX(2.5deg) rotateY(-1.6deg);}
+    to{transform:rotateX(1deg) rotateY(1.6deg);}
+  }
+
+  /* spinning rune ring on the floor, tilted into 3D */
+  .runering{
+    position:absolute;left:50%;bottom:-44px;width:340px;height:340px;margin-left:-170px;
+    transform:rotateX(74deg);transform-style:preserve-3d;z-index:1;pointer-events:none;
+  }
+  .runering .ring{
+    position:absolute;inset:0;border-radius:50%;
+    border:2px dashed rgba(159,255,186,.35);
+    box-shadow:0 0 24px rgba(159,255,186,.18),inset 0 0 24px rgba(159,255,186,.12);
+    animation:spin 26s linear infinite;
+  }
+  .runering .rune{
+    position:absolute;top:50%;left:50%;font-size:22px;color:var(--eerie);
+    text-shadow:0 0 10px rgba(159,255,186,.8);
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* watching eyes in the dark window */
+  .window{
+    position:absolute;top:-46px;left:6px;width:96px;height:120px;border-radius:8px 8px 3px 3px;
+    background:#050a12;border:7px solid #21130a;z-index:2;
+    box-shadow:inset 0 0 22px #000;overflow:hidden;
+    transform:translateZ(-40px);
+  }
+  .window::before{content:'';position:absolute;left:50%;top:0;width:5px;height:100%;background:#21130a;transform:translateX(-50%);}
+  .eyes{
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+    display:flex;gap:12px;animation:blink 7s infinite;
+  }
+  .eyes i{width:7px;height:7px;border-radius:50%;background:var(--eerie);box-shadow:0 0 8px var(--eerie);}
+  @keyframes blink{
+    0%,86%,90%,100%{opacity:.9;transform:translateX(-50%) scaleY(1);}
+    88%{opacity:.9;transform:translateX(-50%) scaleY(.1);}
+    40%,60%{opacity:0;}
+  }
+  @media (max-width:430px){.window{display:none;}}
+
+  /* fireplace */
+  .fireplace{position:relative;z-index:3;transform:translateZ(20px);transform-style:preserve-3d;}
+  .antlers{
+    position:absolute;top:-44px;left:50%;transform:translateX(-50%) translateZ(28px);
+    font-size:2.2rem;z-index:6;filter:grayscale(.4) sepia(.6);
+    animation:roomsway 7s ease-in-out infinite alternate;
+  }
+  .mantel{
+    position:absolute;top:-18px;left:-14px;right:-14px;height:24px;border-radius:3px;
+    background:linear-gradient(#33200f,#1d1107);z-index:5;
+    box-shadow:0 6px 18px rgba(0,0,0,.7);transform:translateZ(24px);
+  }
+  .mantel-decor{
+    position:absolute;top:-46px;left:0;right:0;display:flex;justify-content:space-around;
+    z-index:6;font-size:1.4rem;transform:translateZ(26px);
+  }
+  .mantel-decor .candle{animation:guttering 2.3s ease-in-out infinite;}
+  .brickbox{
+    position:relative;height:400px;border-radius:5px;overflow:hidden;
+    background:
+      repeating-linear-gradient(0deg,var(--brick) 0 32px,var(--brick2) 32px 36px);
+    box-shadow:inset 0 0 70px rgba(0,0,0,.85),0 16px 44px rgba(0,0,0,.7);
+  }
+  .brickbox::before{
+    content:'';position:absolute;inset:0;opacity:.55;
+    background:repeating-linear-gradient(90deg,transparent 0 62px,var(--brick2) 62px 66px);
+  }
+  .hearth{
+    position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+    width:82%;height:80%;border-radius:170px 170px 0 0;
+    background:radial-gradient(ellipse at 50% 100%, #190a02 0%, #060201 78%);
+    box-shadow:inset 0 0 60px #000;overflow:hidden;
+  }
+
+  /* the fyre */
+  .fire{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:86%;height:92%;pointer-events:none;}
+  .fire svg{width:100%;height:100%;overflow:visible;}
+  .flame{transform-origin:50% 100%;}
+  .fl-a{animation:flick 1.7s ease-in-out infinite alternate;}
+  .fl-b{animation:flick 1.05s .3s ease-in-out infinite alternate;}
+  .fl-c{animation:flick .75s .55s ease-in-out infinite alternate;}
+  @keyframes flick{
+    from{transform:scaleY(1) skewX(0);}
+    33%{transform:scaleY(1.08) skewX(2.4deg);}
+    66%{transform:scaleY(.95) skewX(-2.4deg);}
+    to{transform:scaleY(1.16) skewX(1.5deg);}
+  }
+  .fire.flare .flame{animation-duration:.32s !important;}
+  .fireglow{
+    position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+    width:140%;height:130%;border-radius:50%;
+    background:radial-gradient(circle at 50% 82%, rgba(255,150,55,.6), transparent 60%);
+    animation:guttering 2.6s ease-in-out infinite;
+  }
+  .spark{
+    position:absolute;bottom:26%;width:4px;height:4px;border-radius:50%;
+    background:var(--flame);opacity:0;animation:rise 2.8s ease-in infinite;
+  }
+  @keyframes rise{
+    0%{opacity:0;transform:translate3d(0,0,0);}
+    12%{opacity:1;}
+    100%{opacity:0;transform:translate3d(16px,-230px,0);}
+  }
+
+  /* charred manlings of the registered */
+  .burning-row{
+    position:absolute;left:50%;bottom:10%;transform:translateX(-50%);
+    display:flex;gap:3px;align-items:flex-end;justify-content:center;
+    width:92%;flex-wrap:wrap-reverse;z-index:2;
+  }
+  .mini{display:flex;flex-direction:column;align-items:center;animation:charwobble 1.5s ease-in-out infinite alternate;}
+  .mini svg{width:25px;height:auto;}
+  .mini .eyeglow{animation:soulglow 3.5s ease-in-out infinite;}
+  @keyframes soulglow{0%,100%{opacity:.25;}50%{opacity:1;}}
+  .mini-name{
+    font-size:.6rem;color:#ffd9a0;text-shadow:0 1px 3px #000;font-style:italic;
+    max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  @keyframes charwobble{from{transform:rotate(-2deg);}to{transform:rotate(2deg);}}
+
+  .dropring{
+    position:absolute;left:50%;bottom:7%;transform:translateX(-50%);
+    width:74%;height:58%;border:3px dashed transparent;border-radius:150px 150px 16px 16px;
+    pointer-events:none;transition:border-color .25s;z-index:5;
+  }
+  .dropring.active{border-color:rgba(159,255,186,.85);}
+
+  .hearthstone{
+    height:20px;margin:0 -10px;border-radius:3px;
+    background:linear-gradient(#43362b,#241b13);box-shadow:0 10px 24px rgba(0,0,0,.6);
+    transform:translateZ(30px);
+  }
+
+  .roll{
+    text-align:center;margin-top:46px;font-size:.95rem;color:var(--ember);
+    font-style:italic;position:relative;z-index:5;padding:0 14px;
+  }
+
+  /* effigy station */
+  .station{
+    position:relative;z-index:6;margin:22px auto 0;max-width:340px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:linear-gradient(#171009,#0e0803);
+    border:1px solid rgba(232,217,184,.25);border-radius:4px;padding:18px 20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.6);
+  }
+  .effigy{
+    width:76px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+    animation:effigybreathe 4s ease-in-out infinite alternate;
+  }
+  @keyframes effigybreathe{from{transform:rotate(-2deg) scale(1);}to{transform:rotate(2deg) scale(1.04);}}
+  .effigy .eyedot{animation:soulglow 6s ease-in-out infinite;}
+  .effigy.dragging{cursor:grabbing;position:fixed;z-index:60;animation:none;}
+  .effigy.gone{display:none;}
+  .station-label{font-size:.86rem;font-style:italic;color:var(--eerie);text-align:center;}
+  .namefield{width:100%;display:flex;flex-direction:column;gap:6px;align-items:center;}
+  .namefield label{font-size:.95rem;}
+  .namefield input{
+    width:100%;padding:13px 14px;border-radius:3px;border:1px solid rgba(232,217,184,.45);
+    background:#f1e4c4;font-size:1.05rem;font-family:'IM Fell English',Georgia,serif;
+    color:#2a160a;outline:none;text-align:center;
+  }
+  .namefield input:focus{border-color:var(--ember);box-shadow:0 0 0 3px rgba(255,140,58,.35);}
+  .hint{font-size:.84rem;color:#caa97a;font-style:italic;min-height:1.2em;text-align:center;}
+
+  /* confirmation — 3D flip */
+  .confirm{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(4,1,0,.72);opacity:0;pointer-events:none;transition:opacity .7s;
+    z-index:80;padding:20px;perspective:900px;
+  }
+  .confirm.show{opacity:1;pointer-events:auto;}
+  .confirm-card{
+    background:linear-gradient(#f4e6c4,#e3cf9f);color:#2a160a;border-radius:4px;
+    padding:32px 26px;text-align:center;max-width:400px;
+    box-shadow:0 22px 70px rgba(0,0,0,.8);
+    transform:rotateX(80deg);transition:transform .9s cubic-bezier(.2,1.4,.4,1);
+  }
+  .confirm.show .confirm-card{transform:rotateX(0);}
+  .confirm-card h3{font-family:'UnifrakturMaguntia',serif;font-weight:400;font-size:2rem;margin-bottom:8px;}
+  .confirm-card p{line-height:1.55;font-size:1.02rem;}
+  .confirm-card button{
+    margin-top:18px;padding:12px 28px;border:1px solid #2a160a;border-radius:2px;
+    background:#2a160a;color:#f4e6c4;font-size:1rem;cursor:pointer;
+    font-family:'IM Fell English',Georgia,serif;
+  }
+
+  footer{
+    text-align:center;padding:34px 16px 48px;font-size:.88rem;color:#8d744f;
+    font-style:italic;position:relative;z-index:5;
+  }
+
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
+</style>
+</head>
+<body>
+
+<div class="wallflicker" aria-hidden="true"></div>
+<div class="mist" aria-hidden="true"></div>
+<div class="soundcall" id="soundcall">✦ Touch the page, and the fyre shall speak ✦</div>
+<button class="soundbtn" id="soundbtn" aria-pressed="false">🔊 Fyre speaketh</button>
+
+<header>
+  <div class="eyebrow">Upon the XXI of December · The Longest Night</div>
+  <h1>Ye Wynter<br>Solstice Revel</h1>
+  <p class="sub">Hark, weary traveller. The darke half of the yeare draweth to its ende, and the hearth hungereth.</p>
+  <div class="details">🕯️ Doores open at six o' the clock <span>·</span> 🔥 The fyre dieth not <span>·</span> 🍷 Mull'd wine for every soule</div>
+
+  <div class="howto">
+    <h2>How thou shalt be enrolled</h2>
+    <ol>
+      <li>Inscribe thy name beneath the <b>little wooden manling</b>.</li>
+      <li><b>Drag the manling into the hearth-fyre</b> with thine own finger.</li>
+      <li>When the flames leap and his bones glow amber, thou art bound to the revel. There is no other way.</li>
+    </ol>
+  </div>
+</header>
+
+<div class="stage">
+  <div class="room3d">
+    <div class="runering" aria-hidden="true">
+      <div class="ring"></div>
+    </div>
+    <div class="window" aria-hidden="true"><div class="eyes"><i></i><i></i></div></div>
+
+    <div class="fireplace">
+      <div class="antlers" aria-hidden="true">🦌</div>
+      <div class="mantel-decor" aria-hidden="true">
+        <span class="candle">🕯️</span><span>💀</span><span>🌿</span><span>🔮</span><span class="candle">🕯️</span>
+      </div>
+      <div class="mantel"></div>
+      <div class="brickbox">
+        <div class="hearth" id="hearth">
+          <div class="fireglow" aria-hidden="true"></div>
+          <div class="fire" id="fire" aria-hidden="true">
+            <svg viewBox="0 0 300 300" preserveAspectRatio="xMidYMax meet">
+              <path class="flame fl-a" d="M150 14 C98 95 52 142 68 218 C78 264 117 292 150 292 C183 292 222 264 232 218 C248 142 202 95 150 14Z" fill="#b53408"/>
+              <path class="flame fl-b" d="M150 68 C114 126 86 160 96 218 C103 254 129 277 150 277 C171 277 197 254 204 218 C214 160 186 126 150 68Z" fill="#ff7a1a"/>
+              <path class="flame fl-b" d="M150 110 C127 152 108 177 116 220 C121 248 138 264 150 264 C162 264 179 248 184 220 C192 177 173 152 150 110Z" fill="#ffb347"/>
+              <path class="flame fl-c" d="M150 156 C137 182 127 200 132 224 C135 242 144 252 150 252 C156 252 165 242 168 224 C173 200 163 182 150 156Z" fill="#ffe08a"/>
+              <rect x="52" y="264" width="196" height="22" rx="11" fill="#3a230f" transform="rotate(-6 150 275)"/>
+              <rect x="52" y="264" width="196" height="22" rx="11" fill="#4a2d13" transform="rotate(6 150 275)"/>
+            </svg>
+          </div>
+          <div class="burning-row" id="burningRow"></div>
+        </div>
+        <div class="dropring" id="dropring"></div>
+      </div>
+      <div class="hearthstone" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="roll" id="roll">The roll of soules is being fetched from the embers…</div>
+
+  <div class="station">
+    <svg class="effigy" id="effigy" viewBox="0 0 80 130" role="img" aria-label="The little wooden manling — drag him into the fyre to be enrolled">
+      <circle cx="40" cy="20" r="14" fill="#8a5a2e" stroke="#43250e" stroke-width="3"/>
+      <circle class="eyedot" cx="35" cy="18" r="2.2" fill="#9fffba"/>
+      <circle class="eyedot" cx="45" cy="18" r="2.2" fill="#9fffba"/>
+      <path d="M33 26 q7 3 14 0" stroke="#2b1606" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <rect x="33" y="34" width="14" height="48" rx="6" fill="#7a4e26" stroke="#43250e" stroke-width="3"/>
+      <path d="M30 42 h20 M30 56 h20 M30 70 h20" stroke="#43250e" stroke-width="2.5"/>
+      <path d="M34 44 L10 28 M46 44 L70 28" stroke="#6b4220" stroke-width="7" stroke-linecap="round"/>
+      <path d="M10 28 l-5 -4 M10 28 l-6 2 M70 28 l5 -4 M70 28 l6 2" stroke="#6b4220" stroke-width="3" stroke-linecap="round"/>
+      <path d="M36 82 L26 122 M44 82 L54 122" stroke="#6b4220" stroke-width="8" stroke-linecap="round"/>
+    </svg>
+    <div class="station-label" id="stationLabel">⬆ Drag me into the fyre, and thy place is kept ⬆</div>
+    <div class="namefield">
+      <label for="name">First: inscribe thy name here</label>
+      <input id="name" type="text" placeholder="Thy name" autocomplete="name" maxlength="40">
+      <div class="hint" id="hint"></div>
+    </div>
+  </div>
+</div>
+
+<footer>One manling per soule · Bring a sorrow to leave in the flames · Telle no one what the window saw</footer>
+
+<div class="confirm" id="confirm">
+  <div class="confirm-card">
+    <h3>It is done.</h3>
+    <p id="confirmText"></p>
+    <button id="closeConfirm">So mote it be</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ============ runes around the ring ============ */
+(function(){
+  const ring=document.querySelector('.runering');
+  const runes=['ᚠ','ᚱ','ᛟ','ᛉ','ᛏ','ᚹ','ᛞ','ᚦ'];
+  runes.forEach((r,i)=>{
+    const s=document.createElement('span');
+    s.className='rune';s.textContent=r;
+    s.style.transform='rotate('+(i*45)+'deg) translateY(-168px)';
+    ring.appendChild(s);
+  });
+})();
+
+/* ============ sparks ============ */
+(function(){
+  const fire=document.getElementById('fire');
+  for(let i=0;i<7;i++){
+    const s=document.createElement('span');
+    s.className='spark';
+    s.style.left=(34+Math.random()*32)+'%';
+    s.style.animationDelay=(Math.random()*2.8)+'s';
+    s.style.animationDuration=(2+Math.random()*1.6)+'s';
+    fire.appendChild(s);
+  }
+})();
+
+/* ============ AUDIO — built & resumed inside a user gesture (required on iOS/Android) ============ */
+let ACtx=null,master=null,crackleOn=false,audioBuilt=false;
+function buildAudio(){
+  if(audioBuilt)return;
+  audioBuilt=true;
+  ACtx=new (window.AudioContext||window.webkitAudioContext)();
+  master=ACtx.createGain();master.gain.value=0.5;master.connect(ACtx.destination);
+
+  // soft fire roar: brown noise -> lowpass
+  const len=ACtx.sampleRate*2,buf=ACtx.createBuffer(1,len,ACtx.sampleRate),d=buf.getChannelData(0);
+  let last=0;
+  for(let i=0;i<len;i++){const w=Math.random()*2-1;last=(last+0.02*w)/1.02;d[i]=last*3;}
+  const src=ACtx.createBufferSource();src.buffer=buf;src.loop=true;
+  const lp=ACtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=400;
+  const g=ACtx.createGain();g.gain.value=0.5;
+  src.connect(lp).connect(g).connect(master);src.start();
+
+  // low eerie drone
+  const o=ACtx.createOscillator();o.type='sine';o.frequency.value=54;
+  const og=ACtx.createGain();og.gain.value=0.05;
+  o.connect(og).connect(master);o.start();
+
+  // random pops
+  (function pop(){
+    if(crackleOn&&ACtx.state==='running'){
+      const dur=0.02+Math.random()*0.05;
+      const b=ACtx.createBuffer(1,Math.max(1,ACtx.sampleRate*dur|0),ACtx.sampleRate),cd=b.getChannelData(0);
+      for(let i=0;i<cd.length;i++){cd[i]=(Math.random()*2-1)*Math.pow(1-i/cd.length,2);}
+      const p=ACtx.createBufferSource();p.buffer=b;
+      const hp=ACtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=900+Math.random()*2200;
+      const pg=ACtx.createGain();pg.gain.value=0.22+Math.random()*0.5;
+      p.connect(hp).connect(pg).connect(master);p.start();
+    }
+    setTimeout(pop,70+Math.random()*430);
+  })();
+}
+function flareSound(){
+  if(!ACtx||ACtx.state!=='running')return;
+  const dur=0.9,b=ACtx.createBuffer(1,ACtx.sampleRate*dur|0,ACtx.sampleRate),cd=b.getChannelData(0);
+  for(let i=0;i<cd.length;i++){cd[i]=(Math.random()*2-1)*Math.pow(1-i/cd.length,1.5);}
+  const s=ACtx.createBufferSource();s.buffer=b;
+  const bp=ACtx.createBiquadFilter();bp.type='bandpass';
+  bp.frequency.setValueAtTime(280,ACtx.currentTime);
+  bp.frequency.exponentialRampToValueAtTime(1500,ACtx.currentTime+0.5);
+  const g=ACtx.createGain();g.gain.setValueAtTime(0.9,ACtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,ACtx.currentTime+dur);
+  s.connect(bp).connect(g).connect(master);s.start();
+}
+const soundcall=document.getElementById('soundcall');
+const soundbtn=document.getElementById('soundbtn');
+function setSound(on){
+  crackleOn=on;
+  if(on){buildAudio();ACtx.resume();}
+  else if(ACtx){ACtx.suspend();}
+  soundbtn.textContent=on?'🔊 Fyre speaketh':'🔇 Fyre is hush\u2019d';
+  soundbtn.setAttribute('aria-pressed',String(on));
+}
+function firstGesture(e){
+  window.removeEventListener('pointerdown',firstGesture,true);
+  window.removeEventListener('touchend',firstGesture,true);
+  window.removeEventListener('keydown',firstGesture,true);
+  soundcall.classList.add('gone');
+  soundbtn.classList.add('show');
+  if(e.target&&e.target.closest&&e.target.closest('#soundbtn'))return; // the button's own handler will run
+  setSound(true);
+}
+window.addEventListener('pointerdown',firstGesture,true);
+window.addEventListener('touchend',firstGesture,true);
+window.addEventListener('keydown',firstGesture,true);
+soundbtn.addEventListener('click',()=>setSound(!crackleOn));
+document.addEventListener('visibilitychange',()=>{ // pause crackle when tabbed away (battery-friendly)
+  if(!ACtx)return;
+  if(document.hidden){ACtx.suspend();}
+  else if(crackleOn){ACtx.resume();}
+});
+
+/* ============ storage: guests + name draft, all failures silent ============ */
+const GUEST_KEY='solstice-guests';
+const NAME_KEY='solstice-name-draft';
+let guests=[];
+const hasArtifactStore=typeof window.storage!=='undefined'&&window.storage;
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+async function storeGet(key,shared){
+  if(hasArtifactStore){
+    try{const r=await window.storage.get(key,shared);return r?r.value:null;}catch(e){return null;}
+  }
+  return lsGet(key);
+}
+async function storeSet(key,val,shared){
+  if(hasArtifactStore){
+    try{await window.storage.set(key,val,shared);return;}catch(e){}
+  }
+  lsSet(key,val);
+}
+
+const roll=document.getElementById('roll');
+const burningRow=document.getElementById('burningRow');
+const nameInput=document.getElementById('name');
+const hint=document.getElementById('hint');
+
+async function loadAll(){
+  const g=await storeGet(GUEST_KEY,true);
+  if(g){try{guests=JSON.parse(g)||[];}catch(e){guests=[];}}
+  const draft=await storeGet(NAME_KEY,false);
+  if(draft&&!nameInput.value){nameInput.value=draft;hint.textContent='Thy name is remember\u2019d. Now feed the manling to the fyre.';}
+  renderGuests();
+}
+let draftTimer=null;
+nameInput.addEventListener('input',()=>{
+  hint.textContent='';
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(()=>{
+    const v=nameInput.value.trim();
+    if(v)storeSet(NAME_KEY,v,false); // saved as they type — survives reloads
+  },350);
+});
+
+function escapeHTML(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function miniSVG(){
+  return '<svg viewBox="0 0 80 130"><circle cx="40" cy="20" r="14" fill="#241407"/>'+
+    '<circle class="eyeglow" cx="35" cy="18" r="2.4" fill="#ffb347"/>'+
+    '<circle class="eyeglow" cx="45" cy="18" r="2.4" fill="#ffb347"/>'+
+    '<rect x="33" y="34" width="14" height="48" rx="6" fill="#1c0f05"/>'+
+    '<path d="M34 44 L12 30 M46 44 L68 30" stroke="#1c0f05" stroke-width="7" stroke-linecap="round"/>'+
+    '<path d="M36 82 L28 120 M44 82 L52 120" stroke="#1c0f05" stroke-width="8" stroke-linecap="round"/></svg>';
+}
+function renderGuests(){
+  burningRow.innerHTML='';
+  for(const g of guests.slice(-14)){
+    const el=document.createElement('div');
+    el.className='mini';
+    el.innerHTML=miniSVG()+'<span class="mini-name">'+escapeHTML(g.name)+'</span>';
+    el.style.animationDelay=(Math.random()*1.5)+'s';
+    burningRow.appendChild(el);
+  }
+  roll.textContent=guests.length===0
+    ?'No soule hath yet fed the fyre. Be thou the first…'
+    :'🔥 '+guests.length+' soule'+(guests.length===1?'':'s')+' bound to the fyre: '+guests.map(g=>g.name).join(', ');
+}
+
+/* ============ drag the manling ============ */
+const effigy=document.getElementById('effigy');
+const hearth=document.getElementById('hearth');
+const dropring=document.getElementById('dropring');
+const stationLabel=document.getElementById('stationLabel');
+const fire=document.getElementById('fire');
+const homeParent=effigy.parentNode,homeNext=effigy.nextSibling;
+let dragging=false,offX=0,offY=0;
+
+function overHearth(x,y){
+  const r=hearth.getBoundingClientRect(),pad=26;
+  return x>r.left-pad&&x<r.right+pad&&y>r.top-pad&&y<r.bottom+pad;
+}
+effigy.addEventListener('pointerdown',e=>{
+  if(!nameInput.value.trim()){
+    hint.textContent='✍️ Inscribe thy name first, lest the fyre forget thee!';
+    nameInput.focus();return;
+  }
+  hint.textContent='';dragging=true;
+  const r=effigy.getBoundingClientRect();
+  offX=e.clientX-r.left;offY=e.clientY-r.top;
+  effigy.classList.add('dragging');document.body.appendChild(effigy);
+  effigy.style.width=r.width+'px';
+  move(e.clientX,e.clientY);
+  effigy.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+function move(x,y){
+  effigy.style.left=(x-offX)+'px';effigy.style.top=(y-offY)+'px';
+  dropring.classList.toggle('active',overHearth(x,y));
+}
+effigy.addEventListener('pointermove',e=>{if(dragging)move(e.clientX,e.clientY);});
+effigy.addEventListener('pointerup',e=>{
+  if(!dragging)return;dragging=false;dropring.classList.remove('active');
+  if(overHearth(e.clientX,e.clientY)){register(nameInput.value.trim());}
+  else{
+    effigy.classList.remove('dragging');
+    effigy.style.left='';effigy.style.top='';effigy.style.width='';
+    homeParent.insertBefore(effigy,homeNext);
+    stationLabel.textContent='⬆ Nearly, friend! Cast him into the hearth itself ⬆';
+  }
+});
+effigy.addEventListener('pointercancel',()=>{ // e.g. phone call interrupts the drag
+  if(!dragging)return;dragging=false;dropring.classList.remove('active');
+  effigy.classList.remove('dragging');
+  effigy.style.left='';effigy.style.top='';effigy.style.width='';
+  homeParent.insertBefore(effigy,homeNext);
+});
+
+function register(name){
+  effigy.classList.add('gone');
+  guests.push({name:name,t:Date.now()});
+  renderGuests();
+  storeSet(GUEST_KEY,JSON.stringify(guests),true);
+  fire.classList.add('flare');
+  flareSound();
+  setTimeout(()=>fire.classList.remove('flare'),1400);
+  document.getElementById('confirmText').textContent=
+    'The fyre knoweth thy name, '+name+'. Thy manling shall burn here until the longest night, and a place is kept for thee at the hearth. Come hungry. Come warme. Leave thy sorrows in the flames.';
+  setTimeout(()=>document.getElementById('confirm').classList.add('show'),750);
+}
+document.getElementById('closeConfirm').addEventListener('click',()=>{
+  document.getElementById('confirm').classList.remove('show');
+  nameInput.value='';
+  effigy.classList.remove('gone','dragging');
+  effigy.style.left='';effigy.style.top='';effigy.style.width='';
+  homeParent.insertBefore(effigy,homeNext);
+  stationLabel.textContent='⬆ Drag me into the fyre, and thy place is kept ⬆';
+});
+
+loadAll();
+</script>
+</body>
+</html>
